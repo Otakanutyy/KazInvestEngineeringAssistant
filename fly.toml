@@ -1,0 +1,14 @@
+# Fly.io configuration for deploying only the backend service
+app = "YOUR_FLY_APP_NAME"
+primary_region = "ams"
+
+[build]
+  dockerfile = "backend/Dockerfile"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
