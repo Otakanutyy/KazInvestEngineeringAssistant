@@ -1,13 +1,21 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 const CHAT_URL = `${API_BASE.replace(/\/$/, '')}/chat`;
 
-export async function sendMessage(message: string): Promise<string> {
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export async function sendMessage(
+  message: string,
+  history: ChatMessage[] = []
+): Promise<string> {
   const res = await fetch(CHAT_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, history }),
   });
 
   if (!res.ok) {

@@ -1,6 +1,11 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import OpenAI from 'openai';
 
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 @Injectable()
 export class ChatService {
   private readonly client: OpenAI;
@@ -14,14 +19,21 @@ export class ChatService {
     this.client = new OpenAI({ apiKey });
   }
 
-  async sendMessage(message: string): Promise<string> {
+  async sendMessage(message: string, history: ChatMessage[] = []): Promise<string> {
     try {
+      // Формируем сообщения: system + история + текущее
+      const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+        { role: 'system', content: 'You are a helpful assistant.' },
+        ...history.map((msg) => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content,
+        })),
+        { role: 'user', content: message },
+      ];
+
       const completion = await this.client.chat.completions.create({
         model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'You are a helpful assistant.' },
-          { role: 'user', content: message },
-        ],
+        messages,
       });
 
       const content = completion.choices[0]?.message?.content;

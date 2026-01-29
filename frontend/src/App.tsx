@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import './App.css';
 import { sendMessage } from './api/chat';
+import type { ChatMessage } from './api/chat';
 import { ChatHeader } from './components/ChatHeader';
 import { ResponseCard } from './components/ResponseCard';
 import { ErrorBanner } from './components/ErrorBanner';
@@ -39,20 +40,32 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [history, setHistory] = useState<ChatMessage[]>([]);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const handleSubmit = async () => {
     if (!message.trim()) return;
 
+    const userMessage = message.trim();
     setIsLoading(true);
     setError('');
     setResponse('');
 
     try {
-      const reply = await sendMessage(message);
+      const reply = await sendMessage(userMessage, history);
       setResponse(reply);
       setMessage('');
+      
+      // Добавляем в историю (последние 5 пар = 10 сообщений)
+      setHistory(prev => {
+        const updated = [
+          ...prev,
+          { role: 'user' as const, content: userMessage },
+          { role: 'assistant' as const, content: reply },
+        ];
+        return updated.slice(-10);
+      });
     } catch (err) {
       setError('Ошибка при отправке сообщения. Проверьте подключение к серверу.');
       console.error(err);
