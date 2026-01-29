@@ -20,13 +20,24 @@ let ChatController = class ChatController {
     constructor(chatService) {
         this.chatService = chatService;
     }
-    async create(message) {
+    async create(body) {
+        const { message, history = [] } = body;
         if (!message || typeof message !== 'string') {
             throw new common_1.HttpException('Field "message" is required', common_1.HttpStatus.BAD_REQUEST);
         }
+        const limitedHistory = history.slice(-10);
         try {
-            const reply = await this.chatService.sendMessage(message);
-            return { reply };
+            const reply = await this.chatService.sendMessage(message, limitedHistory);
+            const updatedHistory = [
+                ...limitedHistory,
+                { role: 'user', content: message },
+                { role: 'assistant', content: reply },
+            ].slice(-10);
+            return {
+                reply,
+                lastMessage: message,
+                history: updatedHistory,
+            };
         }
         catch (error) {
             throw new common_1.HttpException('Failed to get response from AI service', common_1.HttpStatus.BAD_GATEWAY);
@@ -36,9 +47,9 @@ let ChatController = class ChatController {
 exports.ChatController = ChatController;
 __decorate([
     (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)('message')),
+    __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], ChatController.prototype, "create", null);
 exports.ChatController = ChatController = __decorate([

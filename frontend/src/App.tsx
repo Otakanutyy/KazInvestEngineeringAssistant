@@ -6,6 +6,7 @@ import { ChatHeader } from './components/ChatHeader';
 import { ResponseCard } from './components/ResponseCard';
 import { ErrorBanner } from './components/ErrorBanner';
 import { InputBar } from './components/InputBar';
+import { CommonPrompts } from './components/CommonPrompts';
 
 // Интерфейс для Web Speech API
 interface SpeechRecognitionEvent extends Event {
@@ -125,6 +126,8 @@ function App() {
 
       <ResponseCard text={response} />
       <ErrorBanner message={error} />
+
+      <CommonPrompts onSelect={(text) => setMessage(text)} />
 
       <InputBar
         message={message}

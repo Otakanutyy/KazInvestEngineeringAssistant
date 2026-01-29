@@ -21,14 +21,19 @@ let ChatService = class ChatService {
         }
         this.client = new openai_1.default({ apiKey });
     }
-    async sendMessage(message) {
+    async sendMessage(message, history = []) {
         try {
+            const messages = [
+                { role: 'system', content: 'You are a helpful assistant.' },
+                ...history.map((msg) => ({
+                    role: msg.role,
+                    content: msg.content,
+                })),
+                { role: 'user', content: message },
+            ];
             const completion = await this.client.chat.completions.create({
                 model: 'gpt-4o-mini',
-                messages: [
-                    { role: 'system', content: 'You are a helpful assistant.' },
-                    { role: 'user', content: message },
-                ],
+                messages,
             });
             const content = completion.choices[0]?.message?.content;
             if (!content) {
