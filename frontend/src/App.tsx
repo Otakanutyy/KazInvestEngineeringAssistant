@@ -130,9 +130,11 @@ function App() {
     setIsListening(true);
   };
 
+  const hasMessages = history.length > 0 || !!pendingMessage;
+
   return (
     <div className="container">
-      <ChatHeader />
+      <ChatHeader showPromptHint={!hasMessages} />
 
       <ChatHistory 
         messages={history} 
@@ -141,7 +143,7 @@ function App() {
       />
       <ErrorBanner message={error} />
 
-      <CommonPrompts onSelect={(text) => setMessage(text)} />
+      {!hasMessages && <CommonPrompts onSelect={(text) => setMessage(text)} />}
 
       <InputBar
         message={message}

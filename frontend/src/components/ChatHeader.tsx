@@ -1,4 +1,8 @@
-export function ChatHeader() {
+interface ChatHeaderProps {
+  showPromptHint?: boolean;
+}
+
+export function ChatHeader({ showPromptHint = true }: ChatHeaderProps) {
   return (
     <>
       <div className="chat-icon">
@@ -8,11 +12,13 @@ export function ChatHeader() {
       </div>
       <h1 className="greeting">Hi there!</h1>
       <h2 className="question">What would you like to know?</h2>
-      <p className="subtitle">
-        Use one of the most common prompts below
-        <br />
-        or ask your own question
-      </p>
+      {showPromptHint && (
+        <p className="subtitle">
+          Use one of the most common prompts below
+          <br />
+          or ask your own question
+        </p>
+      )}
     </>
   );
 }
