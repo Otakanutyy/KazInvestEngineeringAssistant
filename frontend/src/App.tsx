@@ -1,12 +1,14 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import './App.css';
 import { sendMessage } from './api/chat';
 import type { ChatMessage } from './api/chat';
 import { ChatHeader } from './components/ChatHeader';
-import { ResponseCard } from './components/ResponseCard';
+import { ChatHistory } from './components/ChatHistory';
 import { ErrorBanner } from './components/ErrorBanner';
 import { InputBar } from './components/InputBar';
 import { CommonPrompts } from './components/CommonPrompts';
+
+const STORAGE_KEY = 'kazinvest_chat_history';
 
 // Интерфейс для Web Speech API
 interface SpeechRecognitionEvent extends Event {
@@ -37,41 +39,49 @@ declare global {
 
 function App() {
   const [message, setMessage] = useState('');
-  const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isListening, setIsListening] = useState(false);
-  const [history, setHistory] = useState<ChatMessage[]>([]);
+  const [history, setHistory] = useState<ChatMessage[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [pendingMessage, setPendingMessage] = useState<string | undefined>();
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  // Persist history to localStorage
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  }, [history]);
 
   const handleSubmit = async () => {
     if (!message.trim()) return;
 
     const userMessage = message.trim();
+    setMessage('');
+    setPendingMessage(userMessage);
     setIsLoading(true);
     setError('');
-    setResponse('');
 
     try {
       const reply = await sendMessage(userMessage, history);
-      setResponse(reply);
-      setMessage('');
       
-      // Добавляем в историю (последние 5 пар = 10 сообщений)
+      // Update history with user message and reply
       setHistory(prev => {
         const updated = [
           ...prev,
           { role: 'user' as const, content: userMessage },
           { role: 'assistant' as const, content: reply },
         ];
-        return updated.slice(-10);
+        return updated.slice(-10); // Keep last 5 pairs
       });
     } catch (err) {
       setError('Ошибка при отправке сообщения. Проверьте подключение к серверу.');
       console.error(err);
     } finally {
       setIsLoading(false);
+      setPendingMessage(undefined);
     }
   };
 
@@ -124,7 +134,11 @@ function App() {
     <div className="container">
       <ChatHeader />
 
-      <ResponseCard text={response} />
+      <ChatHistory 
+        messages={history} 
+        isLoading={isLoading} 
+        pendingMessage={pendingMessage} 
+      />
       <ErrorBanner message={error} />
 
       <CommonPrompts onSelect={(text) => setMessage(text)} />
